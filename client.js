@@ -1,9 +1,7 @@
 const env = require('./.env.js')
+const url = `${env.OPENAI_BASE_URL}/chat/completions`
 
 async function request(body = {}) {
-	const url = `${env.OPENAI_BASE_URL}/chat/completions`
-	const stream = !!body.stream
-
 	const response = await fetch(url, {
 		method: 'POST',
 		headers: {
@@ -18,7 +16,7 @@ async function request(body = {}) {
 		throw new Error(text || `Request failed with status ${response.status}`)
 	}
 
-	if (stream) {
+	if (body.stream) {
 		return response
 	}
 

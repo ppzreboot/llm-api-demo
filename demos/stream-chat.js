@@ -16,13 +16,15 @@ async function main() {
 		let buffer = ''
 
 		for await (const chunk of response.body) {
-			buffer += decoder.decode(chunk, { stream: true })
+			const c = decoder.decode(chunk, { stream: true })
+			buffer += c
 			const lines = buffer.split('\n')
 			buffer = lines.pop() || ''
 
 			for (const line of lines) {
 				const trimmed = line.trim()
-				if (!trimmed.startsWith('data:')) continue
+				if (!trimmed.startsWith('data:'))
+					continue
 
 				const data = trimmed.slice(5).trim()
 				if (data === '[DONE]') {
