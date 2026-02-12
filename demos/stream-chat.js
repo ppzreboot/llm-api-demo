@@ -8,7 +8,7 @@ async function main() {
 
 		const response = await request({
 			model: 'grok-4-1-fast-non-reasoning',
-			messages: [{ role: 'user', content: 'Write a short poem about coding.' }],
+			input: 'Write a short poem about coding.',
 			stream: true,
 		})
 
@@ -34,7 +34,21 @@ async function main() {
 
 				try {
 					const parsed = JSON.parse(data)
-					const content = parsed.choices?.[0]?.delta?.content || ''
+					let content = ''
+
+					// Handle standard chat completions format (legacy)
+					if (parsed.choices?.[0]?.delta?.content) {
+						content = parsed.choices[0].delta.content
+					}
+					// Handle new Responses API format (if structured similarly)
+					else if (parsed.output?.[0]?.content?.[0]?.text) {
+						content = parsed.output[0].content[0].text
+					}
+					// Handle potential event-based delta format
+					else if (parsed.type === 'response.output_text.delta') {
+						content = parsed.delta || parsed.text || ''
+					}
+
 					process.stdout.write(content)
 				} catch (e) {
 				}

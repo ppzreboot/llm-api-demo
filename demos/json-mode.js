@@ -7,7 +7,7 @@ async function main() {
 
 		const completion = await request({
 			model: 'grok-4-1-fast-non-reasoning',
-			messages: [
+			input: [
 				{
 					role: 'system',
 					content: 'You are a helpful assistant designed to output JSON.',
@@ -31,10 +31,10 @@ async function main() {
 					].join('\n'),
 				},
 			],
-			response_format: { type: 'json_object' },
+			text: { format: { type: 'json_object' } },
 		})
 
-		const content = completion.choices[0].message.content
+		const content = completion.output[0].content[0].text
 		console.log('Raw Output:')
 		console.log(content)
 

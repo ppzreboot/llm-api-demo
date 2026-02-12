@@ -16,69 +16,72 @@ function getCurrentWeather(location, unit = 'celsius') {
 async function main() {
 	try {
 		console.log('--- Function Calling Demo ---')
-		const messages = [
+		const items = [
 			{ role: 'user', content: "What's the weather like in San Francisco, Tokyo, and Paris?" },
 		]
-		console.log(`User: ${messages[0].content}`)
+		console.log(`User: ${items[0].content}`)
 
 		const tools = [
 			{
 				type: 'function',
-				function: {
-					name: 'get_current_weather',
-					description: 'Get the current weather in a given location',
-					parameters: {
-						type: 'object',
-						properties: {
-							location: {
-								type: 'string',
-								description: 'The city and state, e.g. San Francisco, CA',
-							},
-							unit: { type: 'string', enum: ['celsius', 'fahrenheit'] },
+				name: 'get_current_weather',
+				description: 'Get the current weather in a given location',
+				parameters: {
+					type: 'object',
+					properties: {
+						location: {
+							type: 'string',
+							description: 'The city and state, e.g. San Francisco, CA',
 						},
-						required: ['location'],
+						unit: { type: 'string', enum: ['celsius', 'fahrenheit'] },
 					},
+					required: ['location'],
 				},
 			},
 		]
 
 		const response = await request({
 			model: 'grok-4-1-fast-non-reasoning',
-			messages: messages,
+			input: items,
 			tools: tools,
 			tool_choice: 'auto',
 		})
 
-		const responseMessage = response.choices[0].message
-		const toolCalls = responseMessage.tool_calls
+		const outputItems = response.output || []
+		items.push(...outputItems)
 
-		if (toolCalls) {
-			messages.push(responseMessage)
+		const toolCalls = outputItems.filter(item => item.type === 'function_call')
 
+		if (toolCalls.length > 0) {
 			for (const toolCall of toolCalls) {
-				const functionName = toolCall.function.name
-				const functionArgs = JSON.parse(toolCall.function.arguments)
+				const functionName = toolCall.name
+				const functionArgs = JSON.parse(toolCall.arguments)
 
 				if (functionName === 'get_current_weather') {
 					const functionResponse = getCurrentWeather(functionArgs.location, functionArgs.unit)
 
-					messages.push({
-						tool_call_id: toolCall.id,
-						role: 'tool',
-						name: functionName,
-						content: functionResponse,
+					items.push({
+						type: 'function_call_output',
+						call_id: toolCall.call_id || toolCall.id,
+						output: functionResponse,
 					})
 				}
 			}
 
 			const secondResponse = await request({
 				model: 'grok-4-1-fast-non-reasoning',
-				messages: messages,
+				input: items,
 			})
 
-			console.log(`AI: ${secondResponse.choices[0].message.content}`)
+			const messageItem = secondResponse.output.find(item => item.type === 'message')
+			if (messageItem && messageItem.content && messageItem.content[0]) {
+				console.log(`AI: ${messageItem.content[0].text}`)
+			}
 		} else {
-			console.log(`AI: ${responseMessage.content}`)
+			const messageItem = outputItems.find(item => item.type === 'message')
+			if (messageItem && messageItem.content && messageItem.content[0]) {
+				console.log(`AI: ${messageItem.content[0].text}`)
+			}
 		}
 	} catch (error) {
 		console.error('Error:', error)

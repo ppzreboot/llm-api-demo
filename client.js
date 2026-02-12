@@ -1,5 +1,5 @@
 const env = require('./.env.js')
-const url = `${env.OPENAI_BASE_URL}/chat/completions`
+const url = `${env.OPENAI_BASE_URL}/v1/responses`
 
 async function request(body = {}) {
 	const response = await fetch(url, {

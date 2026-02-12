@@ -6,11 +6,11 @@ async function main() {
 		console.log('User: Hello, introduce yourself in one sentence.')
 
 		const completion = await request({
-			messages: [{ role: 'user', content: 'Hello, introduce yourself in one sentence.' }],
+			input: 'Hello, introduce yourself in one sentence.',
 			model: 'grok-4-1-fast-non-reasoning',
 		})
 
-		console.log(`AI: ${completion.choices[0].message.content}`)
+		console.log(`AI: ${completion.output[0].content[0].text}`)
 	} catch (error) {
 		console.error('Error:', error)
 	}
